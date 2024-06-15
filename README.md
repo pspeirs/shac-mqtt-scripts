@@ -1,6 +1,3 @@
-# shac-mqtt-scripts
-Scripts used to connect the cipsal SHAC to an MQTT Broker
-
 # call_cbus2mqtt
 * Script Type: Event Based
 * Set the Group Address / Keyword: MQTT_Grp
