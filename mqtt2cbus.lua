@@ -22,14 +22,15 @@ mqtt_userid = 'MQTT2CBUS'
 mqtt_lwt_topic = 'shac/ha2cbus/lwt'
 mqtt_lwt_offline = 'offline'
 mqtt_lwt_online = 'online'
-mqtt_publish_topic = 'cbus/read/'
-mqtt_subscribe_topics = {"cbus/write/#", "cbus/read/heartbeat"}
+--mqtt_publish_topic = 'cbus/status/'
+mqtt_subscribe_topics = {"cbus/cmd/#", "cbus/read/heartbeat"}
 
 
 -- *************  Load MQTT library and create new client *******************
 mqtt = require("mosquitto")
 log(string.format("Starting MQTT2CBUS - Mosquitto Version %s", mqtt.version()))
 client = mqtt.new(mqtt_userid)
+
 SetUserParam('Local Network', 'MQTT HA-CBUS NOCONNECT', 0)
 
 
@@ -103,36 +104,38 @@ client.ON_MESSAGE = function(mid, topic, payload)
   
 
   
-  if not parts[6] then
+  --if not parts[6] then
+  if table.maxn(parts) ~= 5 then
 		log('MQTT2CBUS - MQTT error', 'Invalid message format')
 
-  elseif parts[6] == "switch" then
+  elseif parts[5] == "state" then
 
     if payload == "on" then
-        SetCBusLevel(0, parts[4], parts[5], 255, 0)
+        SetCBusLevel(0, parts[3], parts[4], 255, 0)
     elseif payload == "off" then
-        SetCBusLevel(0, parts[4], parts[5], 0, 0)
+        SetCBusLevel(0, parts[3], parts[4], 0, 0)
     else
         log(string.format("Unknown Message: %s %s", topic, payload))
     end
     
-  elseif parts[6] == "ramp" then
+  elseif parts[5] == "level" then
   
     if payload == "on" then
-      SetCBusLevel(0, parts[4], parts[5], 255)
+      SetCBusLevel(0, parts[3], parts[4], 255)
           
     elseif payload == "off" then
-      SetCBusLevel(0, parts[4], parts[5], 0)
+      SetCBusLevel(0, parts[3], parts[4], 0)
 
     elseif tonumber(payload) then
       ramp = string.split(payload, ",")
       num = math.floor(ramp[1] + 0.5)
       if num and num < 256 then
         if ramp[2] ~= nil and tonumber(ramp[2]) > 1 then
-          SetCBusLevel(0, parts[4], parts[5], num, ramp[2])
-                  
+          SetCBusLevel(0, parts[3], parts[4], num, ramp[2])
+          log("Setting Level: cbus/cmd/%u/%u Lvl: %u Ramp: %u", parts[3], parts[4], num, ramp[2])
         else
-          SetCBusLevel(0, parts[4], parts[5], num, 0)
+          SetCBusLevel(0, parts[3], parts[4], num, 0)
+          log("Setting Level: cbus/cmd/%u/%u Lvl: %u Ramp: %u", parts[3], parts[4], num, 0)
                   
         end
       end
@@ -141,29 +144,29 @@ client.ON_MESSAGE = function(mid, topic, payload)
       log(string.format("Unknown Message: %s %s", topic, payload))
     end
 
-  elseif parts[6] == "measurement" then
-    SetCBusMeasurement(0, parts[4], parts[5], (payload / 10), 0)
+  elseif parts[5] == "measurement" then
+    SetCBusMeasurement(0, parts[3], parts[4], (payload / 10), 0)
   
 
-  elseif parts[6] == "cover" then
+  elseif parts[5] == "cover" then
       
-    local network = 254
+    --local network = 254
       
     log(string.format("Cover Message: %s %s", topic, payload))
   
     if payload == "open" then
-      log(string.format("OPEN Received: 0/%s/%s - %s ", parts[4], parts[5], 255))
-      SetCBusLevel(0, parts[4], parts[5], 255, 0)
+      log(string.format("OPEN Received: 0/%s/%s - %s ", parts[3], parts[4], 255))
+      SetCBusLevel(0, parts[3], parts[4], 255, 0)
       --client:publish(mqtt_publish_topic .. network .. "/" .. parts[4] .. "/" .. parts[5] .. "/level", 255, 1, false)
           
     elseif payload == "close" then
-      log(string.format("CLOSE Received: 0/%s/%s - %s", parts[4], parts[5], 0))
-      SetCBusLevel(0, parts[4], parts[5], 0, 0)
+      log(string.format("CLOSE Received: 0/%s/%s - %s", parts[3], parts[4], 0))
+      SetCBusLevel(0, parts[3], parts[4], 0, 0)
       --client:publish(mqtt_publish_topic .. network .. "/" .. parts[4] .. "/" .. parts[5] .. "/level", 0, 1, false)
           
     elseif payload == "stop" then
-      log(string.format("STOP Received: 0/%s/%s - %s", parts[4], parts[5], 5))
-      SetCBusLevel(0, parts[4], parts[5], 249, 0)
+      log(string.format("STOP Received: 0/%s/%s - %s", parts[3], parts[4], 249))
+      SetCBusLevel(0, parts[3], parts[4], 249, 0)
       --client:publish(mqtt_publish_topic .. network .. "/" .. parts[4] .. "/" .. parts[5] .. "/level", 249, 1, false)
           
     else
