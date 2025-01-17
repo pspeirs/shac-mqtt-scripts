@@ -14,7 +14,7 @@ udp_host = '127.0.0.1'
 udp_port = 5432
 
 
--- mqtt_broker = '10.1.20.50'
+--Broker Configuration
 mqtt_broker = '10.1.20.36'
 mqtt_username = 'cbus'
 mqtt_password = 'M@!shaba100'
@@ -24,8 +24,8 @@ mqtt_lwt_topic = 'shac/cbus2ha/lwt'
 mqtt_lwt_offline = 'offline'
 mqtt_lwt_online = 'online'
 
-mqtt_publish_topic = 'cbus/read'
-mqtt_publish_topic_new = 'cbus/status'
+--mqtt_publish_topic = 'cbus/read'
+mqtt_publish_topic = 'cbus/status'
 mqtt_subscribe_topics = {}
 
 
@@ -129,8 +129,6 @@ while true do
 	if cmd then
     --log(string.format('CBUS2MQTT - UDP Msg Recvd: %s', cmd))
 
-    --    	log(ContainsKeyword("retain"))
-    
     parts = string.split(cmd, "/")
     
     if table.maxn(parts) < 4 then
@@ -144,11 +142,12 @@ while true do
         device_id = tonumber(parts[3])
         channel_id = tonumber(parts[4])
         value = tonumber(parts[5])
-        mqtt_msg = string.format('%s/%u/%u/%u/%u/%s', mqtt_publish_topic, network, app, device_id, channel_id, "measurement")
-        client:publish(mqtt_msg, value, 0, false)
+        --mqtt_msg = string.format('%s/%u/%u/%u/%u/%s', mqtt_publish_topic, network, app, device_id, channel_id, "measurement")
+        --mqtt_msg = string.format('%s/%u/%u/%u/%s', mqtt_publish_topic, app, device_id, channel_id, "measurement")
+        --client:publish(mqtt_msg, value, 0, false)
 
         -- **** Publish NEW Topic ***
-        mqtt_msg = string.format('%s/%u/%u/%u/%s', mqtt_publish_topic_new, app, device_id, channel_id, "measurement")
+        mqtt_msg = string.format('%s/%u/%u/%u/%s', mqtt_publish_topic, app, device_id, channel_id, "measurement")
         client:publish(mqtt_msg .. "/state", value, 0, false)
 
       elseif (app == 203) then	-- Enable Control
@@ -157,12 +156,12 @@ while true do
         state = (level ~= 0) and "on" or "off"
 
         -- ********* Publish Old format until cut across ************
-        mqtt_msg = string.format('%s/%u/%u/%u', mqtt_publish_topic, network, app, group)
-        client:publish(mqtt_msg .. "/state", state, 0, true)
-        client:publish(mqtt_msg .. "/level", level, 0, true)
+        --mqtt_msg = string.format('%s/%u/%u/%u', mqtt_publish_topic, network, app, group)
+        --client:publish(mqtt_msg .. "/state", state, 0, true)
+        --client:publish(mqtt_msg .. "/level", level, 0, true)
   
         -- **** Publish NEW Topic ***
-        mqtt_msg = string.format('%s/%u/%u', mqtt_publish_topic_new, app, group)
+        mqtt_msg = string.format('%s/%u/%u', mqtt_publish_topic, app, group)
         client:publish(mqtt_msg .. "/state", value, 0, true)
         client:publish(mqtt_msg .. "/level", value, 0, true)
 
@@ -178,13 +177,13 @@ while true do
           client:publish(mqtt_msg, level, 1, false)
 
         else
-        -- ********* Publish Old format until cut across ************
-        mqtt_msg = string.format('%s/%u/%u/%u/level', mqtt_publish_topic, network, app, group)
-          client:publish(mqtt_msg, level, 0, true)
-          log(strint.format('%s -> %u', mqtt_msg, level))
+          -- ********* Publish Old format until cut across ************
+          --mqtt_msg = string.format('%s/%u/%u/%u/level', mqtt_publish_topic, network, app, group)
+          --client:publish(mqtt_msg, level, 0, true)
+          --log(strint.format('%s -> %u', mqtt_msg, level))
 
           -- **** Publish NEW Topic ***
-          mqtt_msg = string.format('%s/%u/%u/level', mqtt_publish_topic_new, app, group)
+          mqtt_msg = string.format('%s/%u/%u/level', mqtt_publish_topic, app, group)
           client:publish(mqtt_msg, value, 0, true)
 
         end
@@ -195,38 +194,24 @@ while true do
         value = tonumber(parts[5])
 
         -- ********* Publish Old format until cut across ************
-        mqtt_msg = string.format('%s/%u/%u/%u/%u/value', mqtt_publish_topic, network, app, device, channel)
-        client:publish(mqtt_msg, value, 0, true)
+        --mqtt_msg = string.format('%s/%u/%u/%u/%u/value', mqtt_publish_topic, network, app, device, channel)
+        --client:publish(mqtt_msg, value, 0, true)
 
-        -- **** Publish NEW Topic ***
-        mqtt_msg = string.format('%s/%u/%u/%u/value', mqtt_publish_topic_new, app, device, channel)
+        mqtt_msg = string.format('%s/%u/%u/%u/value', mqtt_publish_topic, app, device, channel)
         client:publish(mqtt_msg, value, 0, true)
-        
-        --log(mqtt_msg, value)
                 
       else
         group = tonumber(parts[3])
         level = tonumber(parts[4])
-        --state = (level ~= 0) and "ON" or "OFF"
+        state = (level ~= 0) and "on" or "off"
+
+        -- ********* Publish Old format until cut across ************
         --mqtt_msg = string.format('%s/%u/%u/%u', mqtt_publish_topic, network, app, group)
         --client:publish(mqtt_msg .. "/state", state, 0, true)
         --client:publish(mqtt_msg .. "/level", level, 0, true)
         --log(string.format('%s -> state: %s / level: %u', mqtt_msg, state, level))
 
-        -- Send this in efforts to convert to on/off rather than ON/OFF      
-        state = (level ~= 0) and "on" or "off"
-          --mqtt_msg = string.format('%s/%u/%u/%u', mqtt_publish_topic, network, app, group)
-          --client:publish(mqtt_msg .. "/state", state, 0, true)
-          --client:publish(mqtt_msg .. "/level", level, 0, true)
-          --log(string.format('%s -> state: %s / level: %u', mqtt_msg, state, level))
-
-        -- ********* Publish Old format until cut across ************
-        mqtt_msg = string.format('%s/%u/%u/%u', mqtt_publish_topic, network, app, group)
-        client:publish(mqtt_msg .. "/state", state, 0, true)
-        client:publish(mqtt_msg .. "/level", level, 0, true)
-        log(string.format('%s -> state: %s / level: %u', mqtt_msg, state, level))
-
-        mqtt_msg = string.format('%s/%u/%u', mqtt_publish_topic_new, app, group)
+        mqtt_msg = string.format('%s/%u/%u', mqtt_publish_topic, app, group)
         client:publish(mqtt_msg .. "/state", state, 0, true)
         client:publish(mqtt_msg .. "/level", level, 0, true)
         log(string.format('%s -> state: %s / level: %u', mqtt_msg, state, level))
