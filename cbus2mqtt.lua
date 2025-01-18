@@ -60,11 +60,11 @@ client.ON_DISCONNECT = function()
 
   while (client:reconnect() ~= true)
   do
-    log(string.format("CBUS2MQTT - Error reconnecting to broker . . . Retrying"))
+    log(string.format("Error reconnecting to broker . . . Retrying"))
     os.sleep(2)
   end
   
-  --log("reconnected")
+  log("reconnected")
   
 end
 
@@ -121,7 +121,7 @@ while true do
     parts = string.split(cmd, "/")
     
     if table.maxn(parts) < 4 then
-        log(string.format('CBUS2MQTT - Invalid UDP Msg Recvd: %s', data))
+        log(string.format('Invalid UDP Msg Recvd: %s', data))
     else
         
       network = 254
@@ -150,10 +150,13 @@ while true do
 
         if (group == 2) then
           log(string.format('CBUS2MQTT - UDP Msg Recvd: %s %u', cmd, level))
+
+          -- ********* Publish Old format until cut across ************
           mqtt_msg = string.format('%s/heartbeat', mqtt_publish_topic)
           client:publish(mqtt_msg, level, 1, false)
 
         else
+          -- **** Publish NEW Topic ***
           mqtt_msg = string.format('%s/%u/%u/level', mqtt_publish_topic, app, group)
           client:publish(mqtt_msg, value, 0, true)
 
@@ -175,7 +178,7 @@ while true do
         mqtt_msg = string.format('%s/%u/%u', mqtt_publish_topic, app, group)
         client:publish(mqtt_msg .. "/state", state, 0, true)
         client:publish(mqtt_msg .. "/level", level, 0, true)
-        log(string.format('CBUS2MQTT - %s -> state: %s / level: %u', mqtt_msg, state, level))
+        log(string.format('%s -> state: %s / level: %u', mqtt_msg, state, level))
         
       end
 	  end

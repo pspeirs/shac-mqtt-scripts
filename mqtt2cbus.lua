@@ -22,7 +22,7 @@ mqtt_userid = 'MQTT2CBUS'
 mqtt_lwt_topic = 'shac/ha2cbus/lwt'
 mqtt_lwt_offline = 'offline'
 mqtt_lwt_online = 'online'
---mqtt_publish_topic = 'cbus/status/'
+
 mqtt_subscribe_topics = {"cbus/cmd/#", "cbus/read/heartbeat"}
 
 
@@ -132,10 +132,10 @@ client.ON_MESSAGE = function(mid, topic, payload)
       if num and num < 256 then
         if ramp[2] ~= nil and tonumber(ramp[2]) > 1 then
           SetCBusLevel(0, parts[3], parts[4], num, ramp[2])
-          log("Setting Level: cbus/cmd/%u/%u Lvl: %u Ramp: %u", parts[3], parts[4], num, ramp[2])
+          log(string.format("Setting Level: cbus/cmd/%u/%u Lvl: %u Ramp: %u", parts[3], parts[4], num, ramp[2]))
         else
           SetCBusLevel(0, parts[3], parts[4], num, 0)
-          log("Setting Level: cbus/cmd/%u/%u Lvl: %u Ramp: %u", parts[3], parts[4], num, 0)
+          log(string.format("Setting Level: cbus/cmd/%u/%u Lvl: %u Ramp: %u", parts[3], parts[4], num, 0))
                   
         end
       end
@@ -150,24 +150,19 @@ client.ON_MESSAGE = function(mid, topic, payload)
 
   elseif parts[5] == "cover" then
       
-    --local network = 254
-      
     log(string.format("Cover Message: %s %s", topic, payload))
   
     if payload == "open" then
       log(string.format("OPEN Received: 0/%s/%s - %s ", parts[3], parts[4], 255))
       SetCBusLevel(0, parts[3], parts[4], 255, 0)
-      --client:publish(mqtt_publish_topic .. network .. "/" .. parts[4] .. "/" .. parts[5] .. "/level", 255, 1, false)
           
     elseif payload == "close" then
       log(string.format("CLOSE Received: 0/%s/%s - %s", parts[3], parts[4], 0))
       SetCBusLevel(0, parts[3], parts[4], 0, 0)
-      --client:publish(mqtt_publish_topic .. network .. "/" .. parts[4] .. "/" .. parts[5] .. "/level", 0, 1, false)
           
     elseif payload == "stop" then
       log(string.format("STOP Received: 0/%s/%s - %s", parts[3], parts[4], 249))
       SetCBusLevel(0, parts[3], parts[4], 249, 0)
-      --client:publish(mqtt_publish_topic .. network .. "/" .. parts[4] .. "/" .. parts[5] .. "/level", 249, 1, false)
           
     else
       log(string.format("Unknown Message: %s %s", topic, payload))
